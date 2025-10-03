@@ -1,0 +1,12 @@
+services:
+  nextjs:
+    build: .
+    container_name: nextjs-dev
+    command: npm run dev
+    ports:
+      - "3000:3000"         # map container port 3000 → host 3000
+    volumes:
+      - .:/app              # mount code live
+      - /app/node_modules   # keep node_modules inside container
+    environment:
+      - NODE_ENV=development
