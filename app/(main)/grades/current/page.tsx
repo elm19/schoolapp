@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { visitUrl } from "@/lib/utils";
 import { extractStudyPlan } from "@/lib/scrapper";
+import { Card } from "@/components/ui/card";
 import { StudyPlanClient } from "./study-plan-client";
 import { StudyPlanData } from "@/lib/scrapper";
 
