@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import { extractStudentInfo } from "@/lib/scrapper";
-import { cookies } from "next/headers";
+// import { cookies } from "next/headers";
+import { registerUser } from "@/utils/supabase/utils";
+import { createClient } from "@/utils/supabase/server";
 
 // Environment variables
 const SCHOOL_BASE_URL = "https://schoolapp.ensam-umi.ac.ma";
@@ -33,11 +35,23 @@ export async function POST(request: NextRequest) {
     // Parse form data
     const { email, password } = await parseFormData(request);
 
-    console.log("Parsed credentials:", { email, password });
     if (!email || !password) {
       return NextResponse.json(
         { success: false, message: "Email and password are required" },
         { status: 400 }
+      );
+    }
+    const supabase = await createClient();
+
+    // check if user is in supabase before proceeding
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (!error) {
+      return NextResponse.json(
+        { success: true, message: "User already registered" },
+        { status: 200 }
       );
     }
 
@@ -144,8 +158,8 @@ export async function POST(request: NextRequest) {
       year: studentInfo?.Niveau ? parseInt(studentInfo.Niveau, 10) : null,
       name: studentInfo?.name || null,
       code: studentInfo?.Code || null,
-    }
-    JSON.stringify(user)
+    };
+    JSON.stringify(user);
     // Set session cookie if authenticated
     if (isAuthenticated && sessionId) {
       response.cookies.set("user", JSON.stringify(user), {
@@ -155,36 +169,8 @@ export async function POST(request: NextRequest) {
         path: "/",
       });
     }
-    // if (studentInfo) {
-    //   response.cookies.set("studentName", studentInfo.name, {
-    //     httpOnly: false,
-    //     secure: process.env.NODE_ENV === "production",
-    //     sameSite: "strict",
-    //     maxAge: 60 * 60 * 4, // 4 hours
-    //   });
-    //   response.cookies.set("studentId", studentInfo.Code, {
-    //     httpOnly: false,
-    //     secure: process.env.NODE_ENV === "production",
-    //     sameSite: "strict",
-    //     maxAge: 60 * 60 * 4, // 4 hours
-    //   });
-    // }
-    // (await cookies()).set(
-    //   "user",
-    //   JSON.stringify({
-    //     type: "student",
-    //     program: studentInfo?.["Filière"],
-    //     year: parseInt(studentInfo?.Niveau || "", 10),
-    //     name: studentInfo?.name,
-    //   }),
-    //   {
-    //     httpOnly: false,
-    //     sameSite: "lax",
-    //     path: "/",
-    //     maxAge: 60 * 60 * 24 * 7, // 7 days
-    //   }
-    // );
-    console.log(parseInt(studentInfo?.Niveau|| "", 10));
+
+    await registerUser(email, password, studentInfo);
     return response;
   } catch (error: unknown) {
     console.error("Authentication error:", error);

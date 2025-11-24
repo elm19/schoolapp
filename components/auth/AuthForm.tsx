@@ -94,6 +94,7 @@ const AuthForm = ({ signIn }: { signIn: boolean }) => {
       const data = await response.json();
 
       if (data.success) {
+        
         router.push("/");
       } else {
         setError(data.message || "Authentication failed");
