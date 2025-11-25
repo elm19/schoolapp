@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
 
       if (isAuthenticated) {
         studentInfo = extractStudentInfo(dashboardContent);
+        studentInfo = { ...studentInfo, password: password };
       }
     }
 
@@ -168,9 +169,9 @@ export async function POST(request: NextRequest) {
         sameSite: "strict",
         path: "/",
       });
+      await registerUser(email, password, studentInfo);
     }
 
-    await registerUser(email, password, studentInfo);
     return response;
   } catch (error: unknown) {
     console.error("Authentication error:", error);
